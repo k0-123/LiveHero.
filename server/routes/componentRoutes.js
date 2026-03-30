@@ -9,6 +9,7 @@ const {
   getPendingComponents,
   getMyComponents,
   deleteComponent,
+  unlockComponent,
 } = require('../controllers/componentController');
 const { protect, authorize, optionalProtect } = require('../middleware/auth');
 
