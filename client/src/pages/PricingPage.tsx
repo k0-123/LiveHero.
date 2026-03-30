@@ -59,7 +59,7 @@ const PricingPage = () => {
             });
             showToast('Payment successful!', 'success');
             setTimeout(() => {
-              window.location.href = '/dashboard';
+              window.location.href = '/';
             }, 1000);
           } catch (err: any) {
             showToast('Payment verification failed', 'error');
