@@ -18,15 +18,10 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Pre-save hook to generate unique referral code
-userSchema.pre('save', async function(next) {
-  try {
-    if (this.isNew && !this.referralCode) {
-      const randomPart = crypto.randomBytes(3).toString('hex').toUpperCase();
-      this.referralCode = `LH-${randomPart}`;
-    }
-    next();
-  } catch (error) {
-    next(error);
+userSchema.pre('save', async function() {
+  if (this.isNew && !this.referralCode) {
+    const randomPart = crypto.randomBytes(3).toString('hex').toUpperCase();
+    this.referralCode = `LH-${randomPart}`;
   }
 });
 
