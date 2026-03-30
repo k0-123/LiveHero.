@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 
 const PLAN_PRICES = {
-  unlimited: 0,
+  unlimited: 1900, // ₹19
   power: 9900,
   creator: 12900,
 };
@@ -16,17 +16,7 @@ const createCheckout = async (req, res) => {
   try {
     const { plan } = req.body;
 
-    if (PLAN_PRICES[plan] === undefined) {
-      return res.status(400).json({ success: false, message: 'Invalid plan' });
-    }
-
-    if (PLAN_PRICES[plan] === 0) {
-      req.user.isPremium = true;
-      req.user.plan = plan;
-      await req.user.save();
-      return res.status(200).json({ success: true, message: 'Free plan activated', free: true });
-    }
-
+    // No more ₹0 free plan, everything goes through Razorpay now
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -75,6 +65,9 @@ const verifyPayment = async (req, res) => {
       
       user.isPremium = true;
       user.plan = plan;
+      if (plan === 'unlimited') {
+        user.allowedDownloads = (user.allowedDownloads || 0) + 2;
+      }
       if (plan === 'creator') user.role = 'creator';
       await user.save();
 

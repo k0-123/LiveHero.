@@ -54,6 +54,8 @@ export const getComponents = () => fetcher('/components');
 
 export const getComponent = (id: string) => fetcher(`/components/${id}`);
 
+export const unlockComponent = (id: string) => fetcher(`/components/${id}/unlock`, { method: 'POST' });
+
 export const createComponent = (formData: FormData) => 
   fetcher('/components', {
     method: 'POST',

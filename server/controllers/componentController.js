@@ -28,7 +28,10 @@ exports.getComponents = asyncHandler(async (req, res, next) => {
     const isOwner = req.user && comp.creatorId.toString() === req.user._id.toString();
     const isAdmin = req.user?.role === 'admin';
     
-    if (comp.isPremium && !isUserPremium && !isAdmin && !isOwner) {
+    const isUnlocked = req.user?.unlockedComponents?.some(id => id.toString() === comp._id.toString());
+    const isPowerUser = req.user?.plan === 'power' || req.user?.plan === 'creator';
+    
+    if (comp.isPremium && !isUserPremium && !isAdmin && !isOwner && !isUnlocked && !isPowerUser) {
       comp.codePrompt = null; // hide the prompt
     }
     return comp;
@@ -48,7 +51,10 @@ exports.getComponent = asyncHandler(async (req, res, next) => {
   const isOwner = req.user && comp.creatorId.toString() === req.user._id.toString();
   const isAdmin = req.user?.role === 'admin';
 
-  if (comp.isPremium && !isUserPremium && !isAdmin && !isOwner) {
+  const isUnlocked = req.user?.unlockedComponents?.some(id => id.toString() === comp._id.toString());
+  const isPowerUser = req.user?.plan === 'power' || req.user?.plan === 'creator';
+
+  if (comp.isPremium && !isUserPremium && !isAdmin && !isOwner && !isUnlocked && !isPowerUser) {
     comp.codePrompt = null; // hide the prompt
   }
 
@@ -155,4 +161,47 @@ exports.deleteComponent = asyncHandler(async (req, res, next) => {
 
   await component.deleteOne();
   res.status(200).json({ success: true, message: 'Component removed' });
+});
+
+// @desc    Unlock a premium component using a download slot
+// @route   POST /api/components/:id/unlock
+exports.unlockComponent = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+  const componentId = req.params.id;
+
+  const component = await Component.findById(componentId);
+  if (!component) return res.status(404).json({ success: false, message: 'Not found' });
+
+  // Check if admin is trying to unlock
+  if (user.role === 'admin') {
+    return res.status(200).json({ success: true, message: 'Admins have full access' });
+  }
+
+  // Already unlocked?
+  if (user.unlockedComponents.includes(componentId)) {
+    return res.status(200).json({ success: true, message: 'Already unlocked' });
+  }
+
+  // Handle plans
+  if (user.plan === 'power' || user.plan === 'creator') {
+    user.unlockedComponents.push(componentId);
+    await user.save();
+    return res.status(200).json({ success: true, message: 'Unlimited access granted' });
+  }
+
+  if (user.plan === 'unlimited') { // now 'starter' pack
+    const allowed = user.allowedDownloads || 0;
+    const used = user.usedDownloads || 0;
+    
+    if (allowed > used) {
+      user.usedDownloads = used + 1;
+      user.unlockedComponents.push(componentId);
+      await user.save();
+      return res.status(200).json({ success: true, message: `Access granted. ${allowed - (used + 1)} slots remaining.` });
+    } else {
+      return res.status(403).json({ success: false, message: 'No download slots remaining. Upgrade your plan!' });
+    }
+  }
+
+  res.status(403).json({ success: false, message: 'Please purchase a plan to unlock premium components' });
 });

@@ -51,6 +51,7 @@ router.get('/', optionalProtect, getComponents);
 router.post('/', protect, authorize('admin', 'creator'), upload.single('video'), createComponent);
 
 // Delete — strictly Admin for safety
+router.post('/:id/unlock', protect, unlockComponent);
 router.delete('/:id', protect, authorize('admin'), deleteComponent);
 
 // Admin status update

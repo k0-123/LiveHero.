@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
   referralCode: { type: String, unique: true, sparse: true },
   referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   referralsCount: { type: Number, default: 0 },
+  allowedDownloads: { type: Number, default: 0 },
+  usedDownloads: { type: Number, default: 0 },
+  unlockedComponents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Component' }],
 }, { timestamps: true });
 
 userSchema.methods.matchPassword = async function(enteredPassword) {

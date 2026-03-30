@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Copy, LogOut, User as UserIcon, Trash2, Menu, X, Loader2 } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { getComponents, deleteComponent } from './lib/api';
+import { getComponents, deleteComponent, unlockComponent } from './lib/api';
 
 // Lazy load page components for better initial loading performance
 const AffiliatePage = lazy(() => import('./pages/AffiliatePage'));
@@ -203,12 +203,31 @@ const Home = () => {
     fetchComponents();
   }, []);
 
-  const handleCopy = (item: ComponentItem) => {
+  const handleCopy = async (item: ComponentItem) => {
     if (item.codePrompt) {
       navigator.clipboard.writeText(item.codePrompt);
       showToast('Prompt copied to clipboard!');
-    } else {
-      showToast('Login or Upgrade to copy this prompt.', 'error');
+      return;
+    }
+
+    if (!isLoggedIn) {
+      showToast('Sign in to unlock this component', 'error');
+      return;
+    }
+
+    // If it's premium and we don't have the prompt yet, try to unlock
+    if (window.confirm(`Unlock "${item.title}"? This will use 1 of your download slots.`)) {
+      try {
+        const res = await unlockComponent(item._id);
+        if (res.success) {
+          showToast(res.message);
+          // Re-fetch to get the unlocked prompt
+          const data = await getComponents();
+          setComponents(data.data);
+        }
+      } catch (err: any) {
+        showToast(err.message || 'Failed to unlock', 'error');
+      }
     }
   };
 
@@ -320,7 +339,11 @@ const Home = () => {
                       </Link>
                     ) : (
                       <button onClick={() => handleCopy(item)} className="flex items-center gap-2.5 bg-white/10 hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 border border-white/20 px-5 py-2.5 rounded-full text-[12px] uppercase tracking-wider font-bold text-white shadow-[inset_0_1px_rgba(255,255,255,0.2)] group/btn">
-                        <Copy className="w-3.5 h-3.5 group-hover/btn:text-black" /> Copy
+                        {(item.isPremium && !item.codePrompt && !isAdmin) ? (
+                          <><Lock className="w-3.5 h-3.5 group-hover/btn:text-black" /> Unlock</>
+                        ) : (
+                          <><Copy className="w-3.5 h-3.5 group-hover/btn:text-black" /> Copy</>
+                        )}
                       </button>
                     )}
                   </div>

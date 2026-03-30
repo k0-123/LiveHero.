@@ -164,20 +164,20 @@ const PricingPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 relative z-10 w-full">
           
           <PricingCard 
-            title="Go Unlimited"
-            desc="Kickstart your projects with instant access to our hand-picked free library."
-            price="₹0"
-            priceLabel="Forever Free"
+            title="Starter Pack"
+            desc="Perfect for experimenting. Get full code for any 2 high-end components."
+            price="₹19"
+            priceLabel="Limited Trial — One-time"
             plan="unlimited"
-            btnText="Get Free Access"
+            btnText="Get Starter Access"
             loading={loadingPlan === 'unlimited'}
             currentPlan={user?.plan}
             onCheckout={handleCheckout}
             features={[
-              'Instant Access to Free Components',
-              'Standard Commercial License',
-              'Lifetime Free Updates',
-              'Basic Community Support'
+              '2 Components of your choice',
+              'Full Source Code Access',
+              'Copy-Paste Integration',
+              'Lifetime Updates'
             ]}
           />
 
