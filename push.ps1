@@ -1,3 +1,3 @@
 git add .
-git commit -m "Update API URL for Vercel deployment"
+git commit -m "Fix Render deployment MongoDB DNS timeout"
 git push
