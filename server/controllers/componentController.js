@@ -2,6 +2,7 @@ const Component = require('../models/Component');
 const asyncHandler = require('../middleware/async');
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
+const path = require('path');
 
 // @desc    Get all active components
 // @route   GET /api/components
@@ -153,7 +154,7 @@ exports.deleteComponent = asyncHandler(async (req, res, next) => {
   // If local file, delete it
   if (component.videoUrl && component.videoUrl.startsWith('/uploads/')) {
     const fileName = component.videoUrl.split('/').pop();
-    const filePath = `c:/Users/Karan/OneDrive/Desktop/LiveHero/server/uploads/${fileName}`;
+    const filePath = path.join(__dirname, '../uploads/', fileName); // Fix: relative path
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
@@ -177,8 +178,8 @@ exports.unlockComponent = asyncHandler(async (req, res, next) => {
     return res.status(200).json({ success: true, message: 'Admins have full access' });
   }
 
-  // Already unlocked?
-  if (user.unlockedComponents.includes(componentId)) {
+  // Already unlocked? Correct ID comparison
+  if (user.unlockedComponents.some(id => id.toString() === componentId)) {
     return res.status(200).json({ success: true, message: 'Already unlocked' });
   }
 

@@ -60,6 +60,12 @@ const verifyPayment = async (req, res) => {
       .digest('hex');
 
     if (expectedSignature === razorpay_signature) {
+      // Check if transaction is already processed to prevent double-granting
+      const existingTx = await Transaction.findOne({ razorpayOrderId: razorpay_order_id, status: 'completed' });
+      if (existingTx) {
+        return res.status(200).json({ success: true, message: 'Payment already processed' });
+      }
+
       // Payment is successful
       const user = await User.findById(req.user._id);
       
@@ -83,11 +89,12 @@ const verifyPayment = async (req, res) => {
         const referrer = await User.findById(user.referredBy);
         if (referrer) {
           referrer.earnings += commission;
+          referrer.referralsCount = (referrer.referralsCount || 0) + 1; // Fix: increment referral count
           await referrer.save();
 
           await Transaction.create({
             userId: referrer._id,
-            type: 'referral_payout',
+            type: 'referral_earned', // Changed to referral_earned for clarity
             amount: commission,
             status: 'completed',
           });

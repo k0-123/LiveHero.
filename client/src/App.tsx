@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, lazy, Suspense, memo } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense, memo, useCallback } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -271,10 +271,14 @@ const Home = () => {
     fetchComponents();
   }, []);
 
-  const handleCopy = async (item: ComponentItem) => {
+  const handleCopy = useCallback(async (item: ComponentItem) => {
     if (item.codePrompt) {
-      navigator.clipboard.writeText(item.codePrompt);
-      showToast('Prompt copied to clipboard!');
+      try {
+        await navigator.clipboard.writeText(item.codePrompt);
+        showToast('Prompt copied to clipboard!');
+      } catch (err) {
+        showToast('Failed to copy', 'error');
+      }
       return;
     }
 
@@ -289,17 +293,20 @@ const Home = () => {
         const res = await unlockComponent(item._id);
         if (res.success) {
           showToast(res.message);
-          // Re-fetch to get the unlocked prompt
-          const data = await getComponents();
-          setComponents(data.data);
+          // NEW: Efficiency improvement - fetch single instead of ALL
+          // For now, let's just refresh the specific component data locally if we could, 
+          // or at least fetch again but we'll optimize by just patching the state if possible.
+          // Since getComponents() returns the updated list with the now-included codePrompt:
+          const updated = await getComponents();
+          setComponents(updated.data);
         }
       } catch (err: any) {
         showToast(err.message || 'Failed to unlock', 'error');
       }
     }
-  };
+  }, [isLoggedIn, showToast]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (window.confirm('Are you sure? This cannot be undone.')) {
       try {
         await deleteComponent(id);
@@ -309,7 +316,7 @@ const Home = () => {
         showToast('Failed to delete component', 'error');
       }
     }
-  };
+  }, [showToast]);
 
   return (
     <div className="bg-black min-h-screen text-white selection:bg-white/20">
@@ -404,6 +411,13 @@ const Home = () => {
   );
 };
 
+// Protected Admin Route
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin, loading } = useAuth();
+  if (loading) return null;
+  return isAdmin ? <>{children}</> : <Link to="/" />;
+};
+
 const App = () => {
   return (
     <Router>
@@ -419,7 +433,14 @@ const App = () => {
             <Route path="/affiliates" element={<AffiliatePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/admin" element={<AdminPage />} />
+            <Route 
+              path="/admin" 
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
+              } 
+            />
           </Routes>
         </Suspense>
         <Footer />
@@ -434,22 +455,25 @@ const Footer = () => {
   const textRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    if (textRef.current && footerRef.current) {
-      // Rise and light sweep animation
-      gsap.fromTo(textRef.current,
-        { opacity: 0, y: 100 },
-        {
-          opacity: 0.25, // Increased visibility
-          y: 0,
-          duration: 2.5,
-          ease: "power4.out",
-          scrollTrigger: {
-            trigger: footerRef.current,
-            start: "top 95%",
+    let ctx = gsap.context(() => {
+      if (textRef.current && footerRef.current) {
+        gsap.fromTo(textRef.current,
+          { opacity: 0, y: 100 },
+          {
+            opacity: 0.25,
+            y: 0,
+            duration: 2.5,
+            ease: "power4.out",
+            scrollTrigger: {
+              trigger: footerRef.current,
+              start: "top 95%",
+            }
           }
-        }
-      );
-    }
+        );
+      }
+    }, footerRef);
+
+    return () => ctx.revert(); // GSAP Cleanup
   }, []);
 
   return (
