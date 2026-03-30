@@ -1,0 +1,1 @@
+mongodb+srv://karan:rmI5RW1aW9In76eP@cluster0.omcst3r.mongodb.net/livehero

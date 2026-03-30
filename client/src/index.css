@@ -1,0 +1,30 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Titan+One&display=swap');
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-accent: #ffffff;
+  --color-muted: #86868b;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-logo: 'Titan One', sans-serif;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .hero-u-shape {
+    /* Extreme smooth U-shape mask transitioning heavily into pure darkness */
+    -webkit-mask-image: radial-gradient(ellipse 130% 100% at 50% 0%, black 50%, transparent 100%);
+    mask-image: radial-gradient(ellipse 130% 100% at 50% 0%, black 50%, transparent 100%);
+  }
+}
