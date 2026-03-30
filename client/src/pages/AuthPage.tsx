@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { registerUser, loginUser } from '../lib/api';
 
 const AuthPage = () => {
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref');
+  
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -25,7 +28,7 @@ const AuthPage = () => {
       if (isLogin) {
         data = await loginUser(email, password);
       } else {
-        data = await registerUser(name, email, password);
+        data = await registerUser(name, email, password, referralCode || undefined);
       }
 
       login(data.token, data.user);

@@ -33,11 +33,11 @@ const fetcher = async (url: string, options: RequestInit = {}) => {
 };
 
 // Auth
-export const registerUser = (name: string, email: string, password: string) => 
+export const registerUser = (name: string, email: string, password: string, referralCode?: string) => 
   fetcher('/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify({ name, email, password, referralCode }),
   });
 
 export const loginUser = (email: string, password: string) => 
