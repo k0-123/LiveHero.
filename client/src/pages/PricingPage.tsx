@@ -90,30 +90,41 @@ const PricingPage = () => {
   return (
     <div className="bg-[#09090b] min-h-screen text-white selection:bg-white/20">
       
-      {/* Navbar */}
-      <div className="fixed top-6 left-8 z-50">
+      {/* Navbar Logo */}
+      <div className="fixed top-6 left-8 z-[60]">
         <Link to="/" className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-full px-5 py-2 flex items-center justify-center shadow-lg transition-all hover:border-white/20">
-          <span className="font-bold tracking-tighter text-white text-xl">
-            livehero<span className="text-white/30">.</span>
+          <span className="font-sans font-extrabold tracking-tighter text-white text-xl flex items-center gap-1">
+            livehero<span className="text-white/40">.</span>
           </span>
         </Link>
       </div>
 
-      <div className="fixed top-6 right-8 z-50 flex items-center gap-4">
-        {isLoggedIn ? (
-          <div className="flex items-center gap-3 bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-full px-5 py-2">
-            <span className="text-[12px] font-bold text-white/60">{user?.name?.split(' ')[0]}</span>
-            {user?.isPremium && (
-              <span className="text-[9px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">
-                {user.plan}
-              </span>
-            )}
+      <div className="fixed top-6 right-8 z-[60] flex items-center gap-4">
+        <nav className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-full pl-8 pr-2 py-1.5 flex flex-row items-center gap-8 shadow-lg">
+          <div className="hidden md:flex items-center gap-8">
+            <Link to="/" className="text-[12px] uppercase tracking-[0.1em] font-medium text-white/60 hover:text-white transition-colors">Home</Link>
           </div>
-        ) : (
-          <Link to="/auth" className="text-[12px] uppercase tracking-wide font-bold bg-white text-black px-6 py-2.5 rounded-full">
-            Sign In
+          {isLoggedIn ? (
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                <span className="text-[12px] font-bold text-white/70">{user?.name?.split(' ')[0]}</span>
+                {user?.isPremium && (
+                  <span className="text-[9px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">
+                    {user.plan}
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <Link to="/auth" className="text-[12px] uppercase tracking-wide font-bold bg-white text-black px-6 py-2.5 rounded-full">
+              Sign In
+            </Link>
+          )}
+          {/* Mobile Home Link */}
+          <Link to="/" className="md:hidden p-2.5 bg-white/5 border border-white/10 rounded-full text-white/70">
+            <Zap className="w-4 h-4" />
           </Link>
-        )}
+        </nav>
       </div>
 
       {/* Hero Section */}

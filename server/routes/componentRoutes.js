@@ -37,7 +37,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
 });
 
 // IMPORTANT: Specific paths MUST come before /:id to avoid matching "feed" as an id

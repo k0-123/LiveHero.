@@ -14,7 +14,7 @@ const EarnPage = () => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Landing Page');
   const [codePrompt, setCodePrompt] = useState('');
-  const [isPremium] = useState(true);
+  const [isPremium, setIsPremium] = useState(true);
   const [heightClass, setHeightClass] = useState('h-[320px]');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState('');
@@ -46,8 +46,8 @@ const EarnPage = () => {
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        setError('Video must be under 10MB');
+      if (file.size > 50 * 1024 * 1024) {
+        setError('Video must be under 50MB');
         return;
       }
       setVideoFile(file);
@@ -94,7 +94,7 @@ const EarnPage = () => {
         </Link>
       </div>
 
-      <div className="fixed top-6 right-8 z-50">
+      <div className="fixed top-6 right-8 z-50 flex items-center">
         <nav className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-full pl-8 pr-2 py-1.5 flex flex-row items-center gap-8 shadow-lg">
           <div className="hidden md:flex items-center gap-8">
             <Link to="/" className="text-[12px] uppercase tracking-[0.1em] font-medium text-white/60 hover:text-white transition-colors">Home</Link>
@@ -128,9 +128,22 @@ const EarnPage = () => {
                   <select value={heightClass} onChange={(e) => setHeightClass(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl p-4 text-white appearance-none">{HEIGHT_OPTIONS.map(h => <option key={h} value={h} className="bg-black">{h}</option>)}</select>
                 </div>
                 <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-white/10 rounded-2xl p-10 text-center cursor-pointer hover:bg-white/5">
-                  {videoPreview ? <video src={videoPreview} autoPlay loop muted className="w-full max-h-40 object-cover rounded-xl" /> : <p className="text-white/30 text-sm">Upload Video (Max 10MB)</p>}
+                  {videoPreview ? <video src={videoPreview} autoPlay loop muted className="w-full max-h-40 object-cover rounded-xl" /> : <p className="text-white/30 text-sm">Upload Video (Max 50MB)</p>}
                   <input ref={fileInputRef} type="file" onChange={handleVideoChange} className="hidden" />
                 </div>
+
+                {isAdmin && (
+                  <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
+                    <span className="text-sm font-semibold">Premium Visibility</span>
+                    <button 
+                      type="button"
+                      onClick={() => setIsPremium(!isPremium)}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${isPremium ? 'bg-white' : 'bg-white/10'}`}
+                    >
+                      <div className={`absolute top-1 w-4 h-4 rounded-full transition-all ${isPremium ? 'right-1 bg-black' : 'left-1 bg-white/40'}`} />
+                    </button>
+                  </div>
+                )}
                 <textarea value={codePrompt} onChange={(e) => setCodePrompt(e.target.value)} placeholder="Paste whole code or prompt here..." required rows={6} className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white font-mono text-sm resize-none focus:outline-none" />
                 <button type="submit" disabled={loading} className="w-full bg-white text-black font-black py-4 rounded-xl uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(255,255,255,0.1)]">{loading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : 'Submit Template'}</button>
               </form>

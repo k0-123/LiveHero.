@@ -1,16 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import gsap from 'gsap';
-import { motion } from 'framer-motion';
-import { Lock, Copy, LogOut, User as UserIcon, Trash2 } from 'lucide-react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Lock, Copy, LogOut, User as UserIcon, Trash2, Menu, X, Loader2 } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { getComponents, deleteComponent } from './lib/api';
-import AffiliatePage from './pages/AffiliatePage';
-import EarnPage from './pages/EarnPage';
-import AuthPage from './pages/AuthPage';
-import PricingPage from './pages/PricingPage';
-import AdminPage from './pages/AdminPage';
+
+// Lazy load page components for better initial loading performance
+const AffiliatePage = lazy(() => import('./pages/AffiliatePage'));
+const EarnPage = lazy(() => import('./pages/EarnPage'));
+const AuthPage = lazy(() => import('./pages/AuthPage'));
+const PricingPage = lazy(() => import('./pages/PricingPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 import ToastContainer from './components/ToastContainer';
+
+// Register GSAP plugins
+gsap.registerPlugin(ScrollTrigger);
 
 const headlineWords = "Design exactly as you envisioned.".split(" ");
 
@@ -28,16 +34,25 @@ interface ComponentItem {
 const Navbar = () => {
   const { isLoggedIn, user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
+    setIsMobileMenuOpen(false);
   };
+
+  const navLinks = [
+    { label: 'Guide', to: '#', isExternal: false },
+    { label: 'Pricing', to: '/pricing', isExternal: false },
+    { label: 'Earn', to: '/earn', isExternal: false },
+    { label: 'Affiliates', to: '/affiliates', isExternal: false },
+  ];
 
   return (
     <>
       {/* Dynamic Floating Logo - Top Left */}
-      <div className="fixed top-6 left-8 z-50 flex justify-start">
+      <div className="fixed top-6 left-8 z-[60] flex justify-start">
         <Link to="/" className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-full px-5 py-2 flex items-center justify-center shadow-lg transition-all duration-300 hover:border-white/20">
           <div className="font-sans font-extrabold tracking-tighter text-white text-xl flex items-center gap-1">
             livehero<span className="text-white/40">.</span>
@@ -45,45 +60,116 @@ const Navbar = () => {
         </Link>
       </div>
 
-      {/* Navbar */}
-      <div className="fixed top-6 right-8 z-50 flex justify-end">
+      {/* Navbar Desktop */}
+      <div className="fixed top-6 right-8 z-[60] flex justify-end">
         <nav className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-full pl-8 pr-2 py-1.5 flex flex-row items-center gap-8 transition-all duration-300 shadow-lg">
           <div className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-[12px] uppercase tracking-[0.1em] font-medium text-white/60 hover:text-white transition-colors">Guide</a>
-            <Link to="/pricing" className="text-[12px] uppercase tracking-[0.1em] font-medium text-white/60 hover:text-white transition-colors">Pricing</Link>
-            <Link to="/earn" className="text-[12px] uppercase tracking-[0.1em] font-medium text-white/60 hover:text-white transition-colors">Earn</Link>
-            <Link to="/affiliates" className="text-[12px] uppercase tracking-[0.1em] font-medium text-white/60 hover:text-white transition-colors">Affiliates</Link>
+            {navLinks.map((link) => (
+              link.to.startsWith('#') ? (
+                <a key={link.label} href={link.to} className="text-[12px] uppercase tracking-[0.1em] font-medium text-white/60 hover:text-white transition-colors">{link.label}</a>
+              ) : (
+                <Link key={link.label} to={link.to} className="text-[12px] uppercase tracking-[0.1em] font-medium text-white/60 hover:text-white transition-colors">{link.label}</Link>
+              )
+            ))}
             {isAdmin && (
               <Link to="/admin" className="text-[12px] uppercase tracking-[0.1em] font-medium text-amber-400/80 hover:text-amber-300 transition-colors">Admin</Link>
             )}
           </div>
 
-          {isLoggedIn ? (
-            <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
-                <UserIcon className="w-3.5 h-3.5 text-white/50" />
-                <span className="text-[12px] font-bold text-white/70">{user?.name?.split(' ')[0]}</span>
-                {user?.isPremium && (
-                  <span className="text-[9px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Pro</span>
-                )}
+          <div className="flex items-center gap-3">
+            {isLoggedIn ? (
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                  <UserIcon className="w-3.5 h-3.5 text-white/50" />
+                  <span className="text-[12px] font-bold text-white/70">{user?.name?.split(' ')[0]}</span>
+                  {user?.isPremium && (
+                    <span className="text-[9px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Pro</span>
+                  )}
+                </div>
+                <button onClick={handleLogout} className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors hidden md:flex">
+                  <LogOut className="w-3.5 h-3.5 text-white/50" />
+                </button>
               </div>
-              <button onClick={handleLogout} className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors">
-                <LogOut className="w-3.5 h-3.5 text-white/50" />
-              </button>
-            </div>
-          ) : (
-            <Link to="/auth">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="text-[12px] uppercase tracking-wide font-bold bg-white text-black px-6 py-2.5 rounded-full hidden md:block"
-              >
-                Sign In
-              </motion.button>
-            </Link>
-          )}
+            ) : (
+              <Link to="/auth" className="hidden md:block">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="text-[12px] uppercase tracking-wide font-bold bg-white text-black px-6 py-2.5 rounded-full"
+                >
+                  Sign In
+                </motion.button>
+              </Link>
+            )}
+
+            {/* Mobile Toggle */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2.5 md:hidden bg-white/5 border border-white/10 rounded-full text-white/70 hover:text-white transition-colors"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </nav>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[55] bg-black/95 backdrop-blur-3xl md:hidden pt-32 px-10"
+          >
+            <div className="flex flex-col gap-8">
+              {navLinks.map((link) => (
+                link.to.startsWith('#') ? (
+                  <a 
+                    key={link.label} 
+                    href={link.to} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-4xl font-bold tracking-tighter text-white"
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link 
+                    key={link.label} 
+                    to={link.to} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-4xl font-bold tracking-tighter text-white"
+                  >
+                    {link.label}
+                  </Link>
+                )
+              ))}
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-4xl font-bold tracking-tighter text-amber-400">Admin</Link>
+              )}
+              
+              <div className="mt-12 h-[1px] bg-white/10 w-full" />
+              
+              {isLoggedIn ? (
+                <div className="flex flex-col gap-6">
+                  <div className="flex items-center gap-4">
+                    <UserIcon className="w-6 h-6 text-white/50" />
+                    <span className="text-xl font-bold text-white">{user?.name}</span>
+                  </div>
+                  <button onClick={handleLogout} className="flex items-center gap-4 text-white/50 text-xl font-semibold">
+                    <LogOut className="w-6 h-6" /> Logout
+                  </button>
+                </div>
+              ) : (
+                <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                  <button className="w-full bg-white text-black font-black py-5 rounded-2xl text-lg uppercase tracking-tight">Sign In / Register</button>
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
@@ -162,13 +248,18 @@ const Home = () => {
           <p ref={subtextRef} className="max-w-2xl text-[16px] md:text-[18px] text-white/70 font-sans leading-relaxed tracking-wide shadow-black drop-shadow-md" style={{ textWrap: 'balance' }}>
             Stop building from scratch. Drop incredibly designed, highly-interactive React sections straight into your codebase and ship world-class frontends today.
           </p>
-          <div ref={buttonRef} className="mt-12 flex flex-row items-center justify-center gap-5">
-            <Link to={isLoggedIn ? "#explore" : "/auth"}>
-              <motion.button whileHover={{ scale: 1.03, backgroundColor: '#ffffff', color: '#000000' }} whileTap={{ scale: 0.97 }} className="px-7 py-3 rounded-full border border-white bg-white text-black text-sm font-semibold flex items-center justify-center transition-colors shadow-lg shadow-white/20">
+          <div ref={buttonRef} className="mt-12 flex flex-col md:flex-row items-center justify-center gap-5 w-full">
+            <Link to={isLoggedIn ? "#explore" : "/auth"} className="w-full md:w-auto">
+              <motion.button whileHover={{ scale: 1.03, backgroundColor: '#ffffff', color: '#000000' }} whileTap={{ scale: 0.97 }} className="w-full px-7 py-3 rounded-full border border-white bg-white text-black text-sm font-semibold flex items-center justify-center transition-colors shadow-lg shadow-white/20">
                 Get Started
               </motion.button>
             </Link>
-            <motion.button whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.1)' }} whileTap={{ scale: 0.97 }} className="px-7 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-md text-white text-sm font-semibold flex items-center justify-center transition-colors">
+            <motion.button 
+              onClick={() => document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' })}
+              whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.1)' }} 
+              whileTap={{ scale: 0.97 }} 
+              className="w-full md:w-auto px-7 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-md text-white text-sm font-semibold flex items-center justify-center transition-colors"
+            >
               Explore Components
             </motion.button>
           </div>
@@ -254,14 +345,20 @@ const App = () => {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/earn" element={<EarnPage />} />
-          <Route path="/affiliates" element={<AffiliatePage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-        </Routes>
+        <Suspense fallback={
+          <div className="bg-black min-h-screen flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-white/10" />
+          </div>
+        }>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/earn" element={<EarnPage />} />
+            <Route path="/affiliates" element={<AffiliatePage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+          </Routes>
+        </Suspense>
         <Footer />
         <ToastContainer />
       </AuthProvider>
