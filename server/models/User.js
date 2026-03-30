@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -20,7 +21,6 @@ const userSchema = new mongoose.Schema({
 userSchema.pre('save', async function(next) {
   try {
     if (this.isNew && !this.referralCode) {
-      const crypto = require('crypto');
       const randomPart = crypto.randomBytes(3).toString('hex').toUpperCase();
       this.referralCode = `LH-${randomPart}`;
     }

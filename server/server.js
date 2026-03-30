@@ -21,6 +21,19 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Catch unhandled errors immediately to log them in Render
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+  console.error(err.name, err.message, err.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.error(err);
+  process.exit(1);
+});
+
 const app = express();
 
 // Create uploads directory if it doesn't exist
@@ -31,13 +44,16 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Security & Performance
 app.use(helmet({
-  contentSecurityPolicy: false, // Turn off CSP for dev convenience or if using diverse CDNs
+  contentSecurityPolicy: false, 
 }));
 app.use(compression());
 
-// CORS — allow frontend
+// CORS — allow all origins but strictly reflect them for credentials support
 app.use(cors({
-  origin: true, // Fix: Allow and reflect source origin to prevent Vercel/Render mismatches
+  origin: function (origin, callback) {
+    // Return true to allow any origin while supporting credentials
+    callback(null, true);
+  },
   credentials: true,
 }));
 
