@@ -7,8 +7,18 @@ const fetcher = async (url: string, options: RequestInit = {}) => {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
+  // Timeout logic
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
   try {
-    const response = await fetch(`${API_URL}${url}`, { ...options, headers });
+    console.log(`[API Request] ${options.method || 'GET'} ${API_URL}${url}`);
+    const response = await fetch(`${API_URL}${url}`, { 
+      ...options, 
+      headers,
+      signal: controller.signal 
+    });
+    clearTimeout(timeoutId);
     
     // Check if response is actually JSON before parsing
     const contentType = response.headers.get('content-type');
@@ -17,7 +27,7 @@ const fetcher = async (url: string, options: RequestInit = {}) => {
       data = await response.json();
     } else {
       const text = await response.text();
-      console.warn('Received non-JSON response:', text);
+      console.error('Non-JSON response for URL:', url, 'Response text:', text);
       throw new Error(`Server returned non-JSON error: ${response.status} ${response.statusText}`);
     }
 
@@ -27,6 +37,11 @@ const fetcher = async (url: string, options: RequestInit = {}) => {
 
     return data;
   } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      console.error('Request timed out after 10s:', url);
+      throw new Error('API Request timed out. Please check if the server is awake.');
+    }
     console.error('Fetch Error:', error.message);
     throw error;
   }
