@@ -72,8 +72,7 @@ const verifyPayment = async (req, res) => {
       user.isPremium = true;
       user.plan = plan;
       if (plan === 'unlimited') {
-        // Boosted as per user request: giving unlimited access (100 slots)
-        user.allowedDownloads = (user.allowedDownloads || 0) + 100;
+        user.allowedDownloads = (user.allowedDownloads || 0) + 2;
       }
       if (plan === 'creator') user.role = 'creator';
       await user.save();

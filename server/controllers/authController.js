@@ -21,6 +21,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 const register = async (req, res) => {
   try {
     const { name, email, password, referralCode } = req.body;
+    console.log('--- Register initiated ---', { email, hasRef: !!referralCode });
 
     // Check if user exists
     const existingUser = await User.findOne({ email });
@@ -28,14 +29,14 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    // Check referral
+    // Check referral — only if explicitly passed as a string
     let referredBy = null;
-    if (referralCode) {
+    if (referralCode && typeof referralCode === 'string') {
       const referrer = await User.findOne({ referralCode });
       if (referrer) {
         referredBy = referrer._id;
-        // Increment referrer's count
-        referrer.referralsCount += 1;
+        // Increment referrer's count safely
+        referrer.referralsCount = (referrer.referralsCount || 0) + 1;
         await referrer.save();
       }
     }
@@ -47,8 +48,10 @@ const register = async (req, res) => {
       referredBy,
     });
 
+    console.log('--- Register successful ---', email);
     sendTokenResponse(user, 201, res);
   } catch (error) {
+    console.error('--- Register error ---', error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };

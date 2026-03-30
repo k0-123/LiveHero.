@@ -18,19 +18,16 @@ const userSchema = new mongoose.Schema({
 
 // Pre-save hook to generate unique referral code
 userSchema.pre('save', async function(next) {
-  if (this.isNew && !this.referralCode) {
-    const crypto = require('crypto');
-    this.referralCode = 'LH-' + crypto.randomBytes(3).toString('hex').toUpperCase();
-    
-    // Check for collisions just in case
-    const User = mongoose.model('User');
-    let exists = await User.findOne({ referralCode: this.referralCode });
-    while (exists) {
-      this.referralCode = 'LH-' + crypto.randomBytes(3).toString('hex').toUpperCase();
-      exists = await User.findOne({ referralCode: this.referralCode });
+  try {
+    if (this.isNew && !this.referralCode) {
+      const crypto = require('crypto');
+      const randomPart = crypto.randomBytes(3).toString('hex').toUpperCase();
+      this.referralCode = `LH-${randomPart}`;
     }
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
 });
 
 userSchema.methods.matchPassword = async function(enteredPassword) {

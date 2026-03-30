@@ -37,7 +37,7 @@ app.use(compression());
 
 // CORS — allow frontend
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: true, // Fix: Allow and reflect source origin to prevent Vercel/Render mismatches
   credentials: true,
 }));
 
