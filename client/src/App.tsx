@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense, memo } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +6,7 @@ import { Lock, Copy, LogOut, User as UserIcon, Trash2, Menu, X, Loader2 } from '
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { getComponents, deleteComponent, unlockComponent } from './lib/api';
+import { useInView } from 'react-intersection-observer';
 
 // Lazy load page components for better initial loading performance
 const AffiliatePage = lazy(() => import('./pages/AffiliatePage'));
@@ -17,6 +18,73 @@ import ToastContainer from './components/ToastContainer';
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
+
+const ComponentCard = memo(({ item, index, isAdmin, isPremium, handleCopy, handleDelete }: any) => {
+  const { ref, inView } = useInView({
+    threshold: 0.1,
+    triggerOnce: false
+  });
+
+  return (
+    <motion.div 
+      ref={ref}
+      key={item._id} 
+      initial={{ opacity: 0, y: 40, filter: "blur(10px)" }} 
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }} 
+      viewport={{ once: true, margin: "-50px" }} 
+      transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1], delay: (index % 3) * 0.1 }} 
+      className="break-inside-avoid bg-[rgba(255,255,255,0.015)] backdrop-blur-2xl rounded-[32px] overflow-hidden border border-white/5 group hover:border-white/15 transition-all duration-500 ease-out flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:shadow-[0_16px_48px_rgba(255,255,255,0.03)] relative will-change-transform"
+    >
+      <div className={`w-full ${item.heightClass} relative overflow-hidden bg-black/40`}>
+        {inView ? (
+          <video 
+            src={item.videoUrl} 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            preload="auto"
+            className="w-full h-full object-cover scale-[1.02] group-hover:scale-[1.08] transition-transform duration-[1s] ease-out opacity-70 group-hover:opacity-100" 
+          />
+        ) : (
+          <div className="w-full h-full bg-white/[0.02]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+      </div>
+      <div className="p-7 flex flex-row items-center justify-between relative bg-gradient-to-t from-black/90 to-black/20 mt-[-60px] pb-8">
+        <div className="flex flex-col gap-1.5 z-10">
+          <h3 className="text-xl font-bold text-white tracking-tight leading-tight drop-shadow-md">{item.title}</h3>
+          <p className="text-sm text-white/50 font-medium tracking-wide uppercase">{item.category}</p>
+        </div>
+        <div className="z-10 flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }}
+              className="p-2.5 rounded-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all border border-red-500/20"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+          {item.isPremium && !isPremium ? (
+            <Link to="/pricing">
+              <button className="flex items-center gap-2.5 bg-white/5 hover:bg-white/10 backdrop-blur-md transition-all border border-white/10 px-5 py-2.5 rounded-full text-[12px] uppercase tracking-wider font-bold text-white/70 shadow-[inset_0_1px_rgba(255,255,255,0.1)]">
+                <Lock className="w-3.5 h-3.5" /> Premium
+              </button>
+            </Link>
+          ) : (
+            <button onClick={() => handleCopy(item)} className="flex items-center gap-2.5 bg-white/10 hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 border border-white/20 px-5 py-2.5 rounded-full text-[12px] uppercase tracking-wider font-bold text-white shadow-[inset_0_1px_rgba(255,255,255,0.2)] group/btn">
+              {(item.isPremium && !item.codePrompt && !isAdmin) ? (
+                <><Lock className="w-3.5 h-3.5 group-hover/btn:text-black" /> Unlock</>
+              ) : (
+                <><Copy className="w-3.5 h-3.5 group-hover/btn:text-black" /> Copy</>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+});
 
 const headlineWords = "Design exactly as you envisioned.".split(" ");
 
@@ -312,43 +380,15 @@ const Home = () => {
         {!loadingComponents && (
           <div className="relative z-10 columns-1 sm:columns-2 lg:columns-3 gap-8 space-y-8">
             {components.map((item, index) => (
-              <motion.div key={item._id} initial={{ opacity: 0, y: 40, filter: "blur(10px)" }} whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 1, ease: [0.25, 1, 0.5, 1], delay: (index % 3) * 0.15 }} className="break-inside-avoid bg-[rgba(255,255,255,0.015)] backdrop-blur-2xl rounded-[32px] overflow-hidden border border-white/5 group hover:border-white/15 transition-all duration-500 ease-out flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:shadow-[0_16px_48px_rgba(255,255,255,0.03)] relative">
-                <div className={`w-full ${item.heightClass} relative overflow-hidden bg-black/40`}>
-                  <video src={item.videoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover scale-[1.02] group-hover:scale-[1.08] transition-transform duration-[1.5s] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-70 group-hover:opacity-100" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-                </div>
-                <div className="p-7 flex flex-row items-center justify-between relative bg-gradient-to-t from-black/90 to-black/20 mt-[-60px] pb-8">
-                  <div className="flex flex-col gap-1.5 z-10">
-                    <h3 className="text-xl font-bold text-white tracking-tight leading-tight drop-shadow-md">{item.title}</h3>
-                    <p className="text-sm text-white/50 font-medium tracking-wide uppercase">{item.category}</p>
-                  </div>
-                  <div className="z-10 flex items-center gap-2">
-                    {isAdmin && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }}
-                        className="p-2.5 rounded-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all border border-red-500/20"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                    {item.isPremium && !isPremium ? (
-                      <Link to="/pricing">
-                        <button className="flex items-center gap-2.5 bg-white/5 hover:bg-white/10 backdrop-blur-md transition-all border border-white/10 px-5 py-2.5 rounded-full text-[12px] uppercase tracking-wider font-bold text-white/70 shadow-[inset_0_1px_rgba(255,255,255,0.1)]">
-                          <Lock className="w-3.5 h-3.5" /> Premium
-                        </button>
-                      </Link>
-                    ) : (
-                      <button onClick={() => handleCopy(item)} className="flex items-center gap-2.5 bg-white/10 hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 border border-white/20 px-5 py-2.5 rounded-full text-[12px] uppercase tracking-wider font-bold text-white shadow-[inset_0_1px_rgba(255,255,255,0.2)] group/btn">
-                        {(item.isPremium && !item.codePrompt && !isAdmin) ? (
-                          <><Lock className="w-3.5 h-3.5 group-hover/btn:text-black" /> Unlock</>
-                        ) : (
-                          <><Copy className="w-3.5 h-3.5 group-hover/btn:text-black" /> Copy</>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
+              <ComponentCard 
+                key={item._id}
+                item={item} 
+                index={index} 
+                isAdmin={isAdmin}
+                isPremium={isPremium}
+                handleCopy={handleCopy}
+                handleDelete={handleDelete}
+              />
             ))}
           </div>
         )}

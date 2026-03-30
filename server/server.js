@@ -3,6 +3,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const cloudinary = require('cloudinary').v2;
 const connectDB = require('./config/db');
+const compression = require('compression');
+const helmet = require('helmet');
 const fs = require('fs');
 const path = require('path');
 
@@ -26,6 +28,12 @@ const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+// Security & Performance
+app.use(helmet({
+  contentSecurityPolicy: false, // Turn off CSP for dev convenience or if using diverse CDNs
+}));
+app.use(compression());
 
 // CORS — allow frontend
 app.use(cors({
