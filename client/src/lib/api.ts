@@ -1,18 +1,19 @@
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-const fetcher = async (url: string, options: RequestInit = {}) => {
+const fetcher = async (url: string, options: RequestInit & { timeout?: number } = {}) => {
   const token = localStorage.getItem('token');
   const headers: any = {
     ...options.headers,
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
-  // Timeout logic
+  // Timeout logic - defaults to 60s for Render spin-up, but can be overridden
+  const timeoutMs = options.timeout || 60000;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    console.log(`[API Request] ${options.method || 'GET'} ${API_URL}${url}`);
+    console.log(`[API Request] ${options.method || 'GET'} ${API_URL}${url} (timeout: ${timeoutMs}ms)`);
     const response = await fetch(`${API_URL}${url}`, { 
       ...options, 
       headers,
@@ -39,7 +40,7 @@ const fetcher = async (url: string, options: RequestInit = {}) => {
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      console.error('Request timed out after 10s:', url);
+      console.error(`Request timed out after ${timeoutMs/1000}s:`, url);
       throw new Error('API Request timed out. Please check if the server is awake.');
     }
     console.error('Fetch Error:', error.message);
@@ -75,6 +76,7 @@ export const createComponent = (formData: FormData) =>
   fetcher('/components', {
     method: 'POST',
     body: formData, // FormData handles its own multipart headers
+    timeout: 300000, // 5 min for video upload
   });
 
 export const deleteComponent = (id: string) =>

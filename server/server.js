@@ -88,8 +88,10 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n  LiveHero Server running on port ${PORT}`);
   console.log(`  Health: http://localhost:${PORT}/api/health\n`);
 });
+
+// Set server timeout to 5 minutes for video uploads
+server.timeout = 300000;
