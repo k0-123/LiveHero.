@@ -101,7 +101,7 @@ exports.createComponent = asyncHandler(async (req, res, next) => {
       isPremium: String(isPremium) === 'true',
       heightClass,
       creatorId: req.user._id,
-      status: req.user.role === 'admin' ? 'approved' : 'pending' // Admin goes live immediately
+      status: (req.user.role === 'admin' || req.user.role === 'creator') ? 'approved' : 'pending' // New: Creators also go live immediately for better visibility
     });
 
     res.status(201).json({ success: true, data: component });

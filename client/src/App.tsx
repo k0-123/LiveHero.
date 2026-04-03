@@ -33,9 +33,9 @@ const ComponentCard = memo(({ item, index, isAdmin, isPremium, handleCopy, handl
       whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }} 
       viewport={{ once: true, margin: "-50px" }} 
       transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1], delay: (index % 3) * 0.1 }} 
-      className="break-inside-avoid bg-[rgba(255,255,255,0.015)] backdrop-blur-2xl rounded-[32px] overflow-hidden border border-white/5 group hover:border-white/15 transition-all duration-500 ease-out flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:shadow-[0_16px_48px_rgba(255,255,255,0.03)] relative will-change-transform"
+      className="break-inside-avoid bg-[rgba(255,255,255,0.02)] backdrop-blur-3xl rounded-[32px] overflow-hidden border border-white/10 transition-all duration-500 ease-out flex flex-col shadow-[0_0_40px_rgba(255,255,255,0.06)] relative will-change-transform"
     >
-      <div className={`w-full ${item.heightClass} relative overflow-hidden bg-black/40`}>
+      <div className={`w-full ${item.heightClass} relative overflow-hidden`}>
         {inView ? (
           <video 
             src={item.videoUrl} 
@@ -44,12 +44,12 @@ const ComponentCard = memo(({ item, index, isAdmin, isPremium, handleCopy, handl
             muted 
             playsInline 
             preload="auto"
-            className="w-full h-full object-cover scale-[1.02] group-hover:scale-[1.08] transition-transform duration-[1s] ease-out opacity-70 group-hover:opacity-100" 
+            className="w-full h-full object-cover scale-[1.02] transition-transform duration-[1s] ease-out opacity-100" 
           />
         ) : (
           <div className="w-full h-full bg-white/[0.02]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
       </div>
       <div className="p-7 flex flex-row items-center justify-between relative bg-gradient-to-t from-black/90 to-black/20 mt-[-60px] pb-8">
         <div className="flex flex-col gap-1.5 z-10">
@@ -343,11 +343,12 @@ const Home = () => {
             Stop building from scratch. Drop incredibly designed, highly-interactive React sections straight into your codebase and ship world-class frontends today.
           </p>
           <div ref={buttonRef} className="mt-12 flex flex-col md:flex-row items-center justify-center gap-5 w-full">
-            <Link to={isLoggedIn ? "#explore" : "/auth"} className="w-full md:w-auto">
-              <motion.button whileHover={{ scale: 1.03, backgroundColor: '#ffffff', color: '#000000' }} whileTap={{ scale: 0.97 }} className="w-full px-7 py-3 rounded-full border border-white bg-white text-black text-sm font-semibold flex items-center justify-center transition-colors shadow-lg shadow-white/20">
-                Get Started
-              </motion.button>
-            </Link>
+            <button 
+              onClick={() => document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-full md:w-auto px-7 py-3 rounded-full border border-white bg-white text-black text-sm font-semibold flex items-center justify-center transition-colors shadow-lg shadow-white/20"
+            >
+              Get Started
+            </button>
             <motion.button 
               onClick={() => document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' })}
               whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.1)' }} 
