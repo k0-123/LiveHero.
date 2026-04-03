@@ -33,7 +33,7 @@ const ComponentCard = memo(({ item, index, isAdmin, isPremium, handleCopy, handl
       whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }} 
       viewport={{ once: true, margin: "-50px" }} 
       transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1], delay: (index % 3) * 0.1 }} 
-      className="break-inside-avoid bg-[rgba(255,255,255,0.02)] backdrop-blur-3xl rounded-[32px] overflow-hidden border border-white/10 transition-all duration-500 ease-out flex flex-col shadow-[0_0_40px_rgba(255,255,255,0.06)] relative will-change-transform"
+      className="break-inside-avoid bg-[rgba(255,255,255,0.02)] backdrop-blur-3xl rounded-[32px] overflow-hidden border border-white/10 transition-all duration-500 ease-out flex flex-col shadow-[0_0_40px_rgba(255,255,255,0.06)] hover:shadow-[0_0_20px_rgba(255,255,255,0.12)] hover:border-white/30 relative will-change-transform"
     >
       <div className={`w-full ${item.heightClass} relative overflow-hidden`}>
         {inView ? (
@@ -247,7 +247,12 @@ const Home = () => {
   const buttonRef = useRef<HTMLDivElement>(null);
   const [components, setComponents] = useState<ComponentItem[]>([]);
   const [loadingComponents, setLoadingComponents] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'free'>('all');
   const { isPremium, isLoggedIn, isAdmin, showToast } = useAuth();
+
+  const filteredComponents = filter === 'all' 
+    ? components 
+    : components.filter(c => !c.isPremium);
 
   useEffect(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power4.out', duration: 1.6 } });
@@ -370,8 +375,18 @@ const Home = () => {
             <p className="text-white/50 text-lg max-w-xl">Browse premium modules or copy free cinematic layouts directly to your clipboard.</p>
           </div>
           <div className="flex gap-4">
-            <button className="text-[13px] uppercase tracking-wider font-semibold text-white/70 hover:text-white transition-colors bg-white/5 backdrop-blur-md px-6 py-2.5 rounded-full border border-white/10 shadow-[inset_0_1px_rgba(255,255,255,0.1)]">All Components</button>
-            <button className="text-[13px] uppercase tracking-wider font-semibold text-white/50 hover:text-white transition-colors bg-white/5 backdrop-blur-md px-6 py-2.5 rounded-full border border-white/5">Free Only</button>
+            <button 
+              onClick={() => setFilter('all')}
+              className={`text-[13px] uppercase tracking-wider font-semibold transition-all px-6 py-2.5 rounded-full border shadow-[inset_0_1px_rgba(255,255,255,0.1)] backdrop-blur-md ${filter === 'all' ? 'text-white border-white/40 bg-white/10' : 'text-white/50 border-white/5 bg-white/5 hover:text-white/70'}`}
+            >
+              All Components
+            </button>
+            <button 
+              onClick={() => setFilter('free')}
+              className={`text-[13px] uppercase tracking-wider font-semibold transition-all px-6 py-2.5 rounded-full border shadow-[inset_0_1px_rgba(255,255,255,0.1)] backdrop-blur-md ${filter === 'free' ? 'text-white border-white/40 bg-white/10' : 'text-white/50 border-white/5 bg-white/5 hover:text-white/70'}`}
+            >
+              Free Only
+            </button>
           </div>
         </motion.div>
 
@@ -387,7 +402,7 @@ const Home = () => {
         {/* Live Component Grid */}
         {!loadingComponents && (
           <div className="relative z-10 columns-1 sm:columns-2 lg:columns-3 gap-8 space-y-8">
-            {components.map((item, index) => (
+            {filteredComponents.map((item, index) => (
               <ComponentCard 
                 key={item._id}
                 item={item} 
@@ -402,9 +417,11 @@ const Home = () => {
         )}
 
         {/* Empty state */}
-        {!loadingComponents && components.length === 0 && (
+        {!loadingComponents && filteredComponents.length === 0 && (
           <div className="text-center py-32">
-            <p className="text-white/30 text-lg">No components yet. Be the first creator to submit one.</p>
+            <p className="text-white/30 text-lg">
+              {filter === 'free' ? 'No free components found.' : 'No components yet. Be the first creator to submit one.'}
+            </p>
           </div>
         )}
       </section>
